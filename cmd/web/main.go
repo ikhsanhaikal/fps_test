@@ -44,7 +44,9 @@ func main() {
 		})
 	})
 
-	// r.Run("localhost:3000")
+	r.POST("/produk", create_produk_handler(queries))
+
+	r.Run("localhost:3000")
 }
 
 // 3. Simpan produk yang sudah anda dapatkan dari url produk

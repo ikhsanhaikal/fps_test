@@ -1,91 +1,42 @@
 package main
 
 import (
-	"crypto/md5"
-	"encoding/hex"
-	"encoding/json"
-	"fmt"
-	"io"
+	"context"
 	"net/http"
-	"net/url"
 	"os"
-	"strings"
-	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jackc/pgx/v5"
 	"github.com/joho/godotenv"
+	"ikhsanhaikal.com/fastprint-test/pgdb"
 )
 
-type FastPrintData struct {
-	No          string `json:"no"`
-	ID_Produk   string `json:"id_produk"`
-	Nama_Produk string `json:"nama_produk"`
-	Kategori    string `json:"kategori"`
-	Harga       string `json:"harga"`
-	Status      string `json:"status"`
-}
-type SuccessResponse struct {
-	Error   int             `json:"error"`
-	Version string          `json:"version"`
-	Data    []FastPrintData `json:"data"`
-}
-
-func initialize() {
+func main() {
 	err := godotenv.Load()
 	if err != nil {
 		panic(err.Error())
 	}
 
-	postUrl := os.Getenv("FASTPRINT_TEST_API")
-	pass := os.Getenv("FASTPRINT_TEST_API_PASS")
+	dbUrl := os.Getenv("GOOSE_DBSTRING")
 
-	resp, err := http.Head(postUrl)
+	ctx := context.Background()
 
+	conn, err := pgx.Connect(ctx, dbUrl)
 	if err != nil {
 		panic(err.Error())
 	}
 
-	uh := resp.Header.Get("x-credentials-username")
-	username := strings.Trim(strings.Split(uh, "(")[0], " ")
+	defer conn.Close(ctx)
 
-	y, m, d := time.Now().Date()
-	raw := fmt.Sprintf("%s-%02d-%02d-%02d", pass, d, m, y%100)
-
-	hash := md5.New()
-	hash.Write([]byte(raw))
-	hashStr := hex.EncodeToString(hash.Sum(nil))
-
-	resp, err = http.PostForm(postUrl, url.Values{
-		"username": []string{username},
-		"password": []string{hashStr},
-	})
-
-	fmt.Printf("username: %s,\npassword: %s\n, raw: %s\n", username, hashStr, raw)
-
-	if err != nil {
+	if err := conn.Ping(ctx); err != nil {
 		panic(err.Error())
 	}
 
-	if resp.StatusCode != 200 {
-		msg, _ := io.ReadAll(resp.Body)
-		fmt.Printf("%#v\n", string(msg))
-	}
+	queries := pgdb.New(conn)
 
-	b, _ := io.ReadAll(resp.Body)
+	// initialize(queries)
 
-	var successResp SuccessResponse
-
-	if err := json.Unmarshal(b, &successResp); err != nil {
-		panic(err.Error())
-	}
-
-	fmt.Printf("%+v", successResp)
-}
-
-func main() {
 	r := gin.Default()
-
-	initialize()
 
 	r.GET("/welcome", func(ctx *gin.Context) {
 		ctx.JSON(http.StatusOK, gin.H{
@@ -95,3 +46,9 @@ func main() {
 
 	// r.Run("localhost:3000")
 }
+
+// 3. Simpan produk yang sudah anda dapatkan dari url produk
+// 4. Buat halaman untuk menampilkan data yang sudah anda simpan
+// 5. Lalu tampilkan data yang hanya memiliki status " bisa dijual " this should be done on react
+// 6. Buat fitur untuk edit, tambah dan hapus
+// 7. Untuk fitur tambah dan edit gunakan form validasi (inputan nama harus diisi, dan harga harus berupa inputan angka)

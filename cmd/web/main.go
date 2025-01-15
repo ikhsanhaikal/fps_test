@@ -46,6 +46,7 @@ func main() {
 
 	r.POST("/produk", create_produk_handler(queries))
 	r.DELETE("/produk/:id", delete_produk_handler(queries))
+	r.PUT("/produk/:id", update_produk_handler(queries))
 
 	r.Run("localhost:3000")
 }

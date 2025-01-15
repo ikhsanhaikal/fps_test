@@ -81,6 +81,7 @@ func (q *Queries) CreateStatus(ctx context.Context, namaStatus string) (Status, 
 const deleteProduk = `-- name: DeleteProduk :exec
 DELETE FROM produk
 WHERE id_produk = $1
+RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
 `
 
 func (q *Queries) DeleteProduk(ctx context.Context, idProduk int32) error {
@@ -117,4 +118,42 @@ func (q *Queries) ListProduk(ctx context.Context) ([]Produk, error) {
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateProduk = `-- name: UpdateProduk :one
+UPDATE produk SET
+  nama_produk = COALESCE($2, nama_produk),
+  harga = COALESCE($3, harga),
+  kategori_id = COALESCE($4, kategori_id),
+  status_id = COALESCE($5, status_id)
+WHERE id_produk = $1
+RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
+`
+
+type UpdateProdukParams struct {
+	IDProduk   int32
+	NamaProduk pgtype.Text
+	Harga      pgtype.Numeric
+	KategoriID pgtype.Int8
+	StatusID   pgtype.Int8
+}
+
+func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (Produk, error) {
+	row := q.db.QueryRow(ctx, updateProduk,
+		arg.IDProduk,
+		arg.NamaProduk,
+		arg.Harga,
+		arg.KategoriID,
+		arg.StatusID,
+	)
+	var i Produk
+	err := row.Scan(
+		&i.IDProduk,
+		&i.NamaProduk,
+		&i.Harga,
+		&i.KategoriID,
+		&i.StatusID,
+		&i.CreatedAt,
+	)
+	return i, err
 }

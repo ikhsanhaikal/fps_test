@@ -78,6 +78,16 @@ func (q *Queries) CreateStatus(ctx context.Context, namaStatus string) (Status, 
 	return i, err
 }
 
+const deleteProduk = `-- name: DeleteProduk :exec
+DELETE FROM produk
+WHERE id_produk = $1
+`
+
+func (q *Queries) DeleteProduk(ctx context.Context, idProduk int32) error {
+	_, err := q.db.Exec(ctx, deleteProduk, idProduk)
+	return err
+}
+
 const listProduk = `-- name: ListProduk :many
 SELECT id_produk, nama_produk, harga, kategori_id, status_id, created_at FROM produk
 `

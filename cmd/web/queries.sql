@@ -24,3 +24,7 @@ INSERT INTO status (
   $1
 )
 RETURNING *;
+
+-- name: DeleteProduk :exec
+DELETE FROM produk
+WHERE id_produk = $1;

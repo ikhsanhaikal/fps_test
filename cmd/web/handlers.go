@@ -46,3 +46,28 @@ func create_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
 		})
 	}
 }
+
+type ProdukUri struct {
+	ID int32 `uri:"id" binding:"required"`
+}
+
+func delete_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
+	return func(ctx *gin.Context) {
+		var produkUri ProdukUri
+
+		if err := ctx.ShouldBindUri(&produkUri); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+			return
+		}
+
+		fmt.Printf("produk_id: %#v\n", produkUri)
+
+		if err := queries.DeleteProduk(ctx, produkUri.ID); err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+		ctx.Status(http.StatusNoContent)
+	}
+}

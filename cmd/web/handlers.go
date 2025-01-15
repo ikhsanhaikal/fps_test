@@ -71,3 +71,73 @@ func delete_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
 		ctx.Status(http.StatusNoContent)
 	}
 }
+
+func update_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
+	return func(ctx *gin.Context) {
+		var produkUri ProdukUri
+
+		if err := ctx.ShouldBindUri(&produkUri); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+			return
+		}
+
+		body := struct {
+			Nama       *string `form:"nama" json:"nama" xml:"nama"  binding:"omitempty"`
+			Harga      *int    `form:"harga" json:"harga" xml:"harga" binding:"omitempty"`
+			KategoriID *int    `form:"kategori_id" json:"kategori_id" xml:"kategori_id" binding:"omitempty"`
+			StatusID   *int    `form:"status_id" json:"status_id" xml:"status_id" binding:"omitempty"`
+		}{}
+
+		if err := ctx.ShouldBindJSON(&body); err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		fmt.Printf("produk_id: %#v\n", produkUri)
+
+		var namaProduk pgtype.Text
+		var harga pgtype.Numeric
+		var kategoriId pgtype.Int8
+		var statusId pgtype.Int8
+
+		if body.Nama != nil {
+			namaProduk.String = *body.Nama
+			namaProduk.Valid = true
+		}
+		if body.Harga != nil {
+			harga.Int = big.NewInt(int64(*body.Harga))
+			harga.Exp = 0
+			harga.NaN = false
+			harga.Valid = true
+		}
+		if body.KategoriID != nil {
+			kategoriId.Int64 = int64(*body.KategoriID)
+			kategoriId.Valid = true
+		}
+		if body.StatusID != nil {
+			statusId.Int64 = int64(*body.StatusID)
+			statusId.Valid = true
+		}
+
+		produk, err := queries.UpdateProduk(ctx, pgdb.UpdateProdukParams{
+			NamaProduk: namaProduk,
+			Harga:      harga,
+			IDProduk:   produkUri.ID,
+			KategoriID: kategoriId,
+			StatusID:   statusId,
+		})
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"errors": nil,
+			"data":   produk,
+		})
+
+	}
+}

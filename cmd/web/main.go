@@ -34,7 +34,7 @@ func main() {
 
 	queries := pgdb.New(conn)
 
-	// initialize(queries)
+	// initialize(queries) TODO: check if already populated
 
 	r := gin.Default()
 
@@ -46,12 +46,11 @@ func main() {
 
 	r.POST("/produk", create_produk_handler(queries))
 	r.DELETE("/produk/:id", delete_produk_handler(queries))
+	r.PUT("/produk/:id", update_produk_handler(queries))
 
 	r.Run("localhost:3000")
 }
 
-// 3. Simpan produk yang sudah anda dapatkan dari url produk
 // 4. Buat halaman untuk menampilkan data yang sudah anda simpan
 // 5. Lalu tampilkan data yang hanya memiliki status " bisa dijual " this should be done on react
-// 6. Buat fitur untuk edit, tambah dan hapus
 // 7. Untuk fitur tambah dan edit gunakan form validasi (inputan nama harus diisi, dan harga harus berupa inputan angka)

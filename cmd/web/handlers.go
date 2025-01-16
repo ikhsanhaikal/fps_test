@@ -120,9 +120,9 @@ func update_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
 		}
 
 		produk, err := queries.UpdateProduk(ctx, pgdb.UpdateProdukParams{
+			Id:         produkUri.ID,
 			NamaProduk: namaProduk,
 			Harga:      harga,
-			IDProduk:   produkUri.ID,
 			KategoriID: kategoriId,
 			StatusID:   statusId,
 		})

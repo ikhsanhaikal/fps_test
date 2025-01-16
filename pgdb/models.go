@@ -9,20 +9,20 @@ import (
 )
 
 type Kategori struct {
-	IDKategori   int32
-	NamaKategori string
+	IDKategori   int32  `json:"id_kategori"`
+	NamaKategori string `json:"nama_kategori"`
 }
 
 type Produk struct {
-	IDProduk   int32
-	NamaProduk string
-	Harga      pgtype.Numeric
-	KategoriID int64
-	StatusID   int64
-	CreatedAt  pgtype.Timestamp
+	Id         int32            `json:"id_produk"`
+	NamaProduk string           `json:"nama_produk"`
+	Harga      pgtype.Numeric   `json:"harga"`
+	KategoriID int64            `json:"kategori_id"`
+	StatusID   int64            `json:"status_id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
 }
 
 type Status struct {
-	IDStatus   int32
-	NamaStatus string
+	IDStatus   int32  `json:"id_status"`
+	NamaStatus string `json:"nama_status"`
 }

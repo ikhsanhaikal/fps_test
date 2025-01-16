@@ -37,10 +37,10 @@ RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
 `
 
 type CreateProdukParams struct {
-	NamaProduk string
-	Harga      pgtype.Numeric
-	KategoriID int64
-	StatusID   int64
+	NamaProduk string         `json:"nama_produk"`
+	Harga      pgtype.Numeric `json:"harga"`
+	KategoriID int64          `json:"kategori_id"`
+	StatusID   int64          `json:"status_id"`
 }
 
 func (q *Queries) CreateProduk(ctx context.Context, arg CreateProdukParams) (Produk, error) {
@@ -52,7 +52,7 @@ func (q *Queries) CreateProduk(ctx context.Context, arg CreateProdukParams) (Pro
 	)
 	var i Produk
 	err := row.Scan(
-		&i.IDProduk,
+		&i.Id,
 		&i.NamaProduk,
 		&i.Harga,
 		&i.KategoriID,
@@ -90,20 +90,35 @@ func (q *Queries) DeleteProduk(ctx context.Context, idProduk int32) error {
 }
 
 const listProduk = `-- name: ListProduk :many
-SELECT id_produk, nama_produk, harga, kategori_id, status_id, created_at FROM produk
+SELECT id_produk as id, nama_produk, harga, kategori_id, status_id, created_at FROM produk
+ORDER BY id LIMIT $1 OFFSET $2
 `
 
-func (q *Queries) ListProduk(ctx context.Context) ([]Produk, error) {
-	rows, err := q.db.Query(ctx, listProduk)
+type ListProdukParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListProdukRow struct {
+	ID         int32            `json:"id"`
+	NamaProduk string           `json:"nama_produk"`
+	Harga      pgtype.Numeric   `json:"harga"`
+	KategoriID int64            `json:"kategori_id"`
+	StatusID   int64            `json:"status_id"`
+	CreatedAt  pgtype.Timestamp `json:"created_at"`
+}
+
+func (q *Queries) ListProduk(ctx context.Context, arg ListProdukParams) ([]ListProdukRow, error) {
+	rows, err := q.db.Query(ctx, listProduk, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Produk
+	var items []ListProdukRow
 	for rows.Next() {
-		var i Produk
+		var i ListProdukRow
 		if err := rows.Scan(
-			&i.IDProduk,
+			&i.ID,
 			&i.NamaProduk,
 			&i.Harga,
 			&i.KategoriID,
@@ -120,6 +135,17 @@ func (q *Queries) ListProduk(ctx context.Context) ([]Produk, error) {
 	return items, nil
 }
 
+const totalProduk = `-- name: TotalProduk :one
+SELECT COUNT(*) AS total FROM produk
+`
+
+func (q *Queries) TotalProduk(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, totalProduk)
+	var total int64
+	err := row.Scan(&total)
+	return total, err
+}
+
 const updateProduk = `-- name: UpdateProduk :one
 UPDATE produk SET
   nama_produk = COALESCE($2, nama_produk),
@@ -131,16 +157,16 @@ RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
 `
 
 type UpdateProdukParams struct {
-	IDProduk   int32
-	NamaProduk pgtype.Text
-	Harga      pgtype.Numeric
-	KategoriID pgtype.Int8
-	StatusID   pgtype.Int8
+	Id         int32          `json:"id_produk"`
+	NamaProduk pgtype.Text    `json:"nama_produk"`
+	Harga      pgtype.Numeric `json:"harga"`
+	KategoriID pgtype.Int8    `json:"kategori_id"`
+	StatusID   pgtype.Int8    `json:"status_id"`
 }
 
 func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (Produk, error) {
 	row := q.db.QueryRow(ctx, updateProduk,
-		arg.IDProduk,
+		arg.Id,
 		arg.NamaProduk,
 		arg.Harga,
 		arg.KategoriID,
@@ -148,7 +174,7 @@ func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (Pro
 	)
 	var i Produk
 	err := row.Scan(
-		&i.IDProduk,
+		&i.Id,
 		&i.NamaProduk,
 		&i.Harga,
 		&i.KategoriID,

@@ -1,5 +1,9 @@
+-- name: TotalProduk :one
+SELECT COUNT(*) AS total FROM produk;
+
 -- name: ListProduk :many
-SELECT * FROM produk;
+SELECT id_produk as id, nama_produk, harga, kategori_id, status_id, created_at FROM produk
+ORDER BY id LIMIT $1 OFFSET $2;
 
 -- name: CreateProduk :one
 INSERT INTO produk (

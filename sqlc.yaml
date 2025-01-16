@@ -8,3 +8,7 @@ sql:
         package: "pgdb"
         out: "pgdb"
         sql_package: "pgx/v5"
+        rename:
+          id_produk: "Id"
+        emit_json_tags: true
+        json_tags_case_style: "snake"

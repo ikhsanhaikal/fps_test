@@ -56,7 +56,11 @@ RETURNING *;
 -- name: DeleteProduk :one
 DELETE FROM produk
 WHERE id_produk = $1
+<<<<<<< HEAD
 RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id;
+=======
+RETURNING *;
+>>>>>>> origin/main
 
 -- name: UpdateProduk :one
 UPDATE produk SET
@@ -65,4 +69,8 @@ UPDATE produk SET
   kategori_id = COALESCE(sqlc.narg('kategori_id'), kategori_id),
   status_id = COALESCE(sqlc.narg('status_id'), status_id)
 WHERE id_produk = $1
+<<<<<<< HEAD
 RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id;
+=======
+RETURNING *;
+>>>>>>> origin/main

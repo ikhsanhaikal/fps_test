@@ -88,7 +88,11 @@ func (q *Queries) CreateStatus(ctx context.Context, namaStatus string) (Status, 
 const deleteProduk = `-- name: DeleteProduk :one
 DELETE FROM produk
 WHERE id_produk = $1
+<<<<<<< HEAD
 RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id
+=======
+RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
+>>>>>>> origin/main
 `
 
 type DeleteProdukRow struct {
@@ -291,6 +295,7 @@ func (q *Queries) ListProduk(ctx context.Context, arg ListProdukParams) ([]ListP
 	return items, nil
 }
 
+<<<<<<< HEAD
 const listStatus = `-- name: ListStatus :many
 SELECT id_status as id, nama_status FROM status 
 ORDER BY id LIMIT $1 OFFSET $2
@@ -337,6 +342,8 @@ func (q *Queries) TotalProduk(ctx context.Context) (int64, error) {
 	return total, err
 }
 
+=======
+>>>>>>> origin/main
 const updateProduk = `-- name: UpdateProduk :one
 UPDATE produk SET
   nama_produk = COALESCE($2, nama_produk),
@@ -344,6 +351,7 @@ UPDATE produk SET
   kategori_id = COALESCE($4, kategori_id),
   status_id = COALESCE($5, status_id)
 WHERE id_produk = $1
+<<<<<<< HEAD
 RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id
 `
 
@@ -366,18 +374,44 @@ type UpdateProdukRow struct {
 func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (UpdateProdukRow, error) {
 	row := q.db.QueryRow(ctx, updateProduk,
 		arg.Id,
+=======
+RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
+`
+
+type UpdateProdukParams struct {
+	IDProduk   int32
+	NamaProduk pgtype.Text
+	Harga      pgtype.Numeric
+	KategoriID pgtype.Int8
+	StatusID   pgtype.Int8
+}
+
+func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (Produk, error) {
+	row := q.db.QueryRow(ctx, updateProduk,
+		arg.IDProduk,
+>>>>>>> origin/main
 		arg.NamaProduk,
 		arg.Harga,
 		arg.KategoriID,
 		arg.StatusID,
 	)
+<<<<<<< HEAD
 	var i UpdateProdukRow
 	err := row.Scan(
 		&i.ID,
+=======
+	var i Produk
+	err := row.Scan(
+		&i.IDProduk,
+>>>>>>> origin/main
 		&i.NamaProduk,
 		&i.Harga,
 		&i.KategoriID,
 		&i.StatusID,
+<<<<<<< HEAD
+=======
+		&i.CreatedAt,
+>>>>>>> origin/main
 	)
 	return i, err
 }

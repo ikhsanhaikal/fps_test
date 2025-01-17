@@ -89,6 +89,113 @@ func (q *Queries) DeleteProduk(ctx context.Context, idProduk int32) error {
 	return err
 }
 
+const getKategoriById = `-- name: GetKategoriById :one
+SELECT id_kategori, nama_kategori from kategori 
+WHERE id_kategori = $1
+`
+
+func (q *Queries) GetKategoriById(ctx context.Context, idKategori int32) (Kategori, error) {
+	row := q.db.QueryRow(ctx, getKategoriById, idKategori)
+	var i Kategori
+	err := row.Scan(&i.IDKategori, &i.NamaKategori)
+	return i, err
+}
+
+const getKategoriByIds = `-- name: GetKategoriByIds :many
+SELECT id_kategori as id , nama_kategori from kategori 
+WHERE id_kategori = ANY($1::int[])
+`
+
+type GetKategoriByIdsRow struct {
+	ID           int32  `json:"id"`
+	NamaKategori string `json:"nama_kategori"`
+}
+
+func (q *Queries) GetKategoriByIds(ctx context.Context, ids []int32) ([]GetKategoriByIdsRow, error) {
+	rows, err := q.db.Query(ctx, getKategoriByIds, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetKategoriByIdsRow
+	for rows.Next() {
+		var i GetKategoriByIdsRow
+		if err := rows.Scan(&i.ID, &i.NamaKategori); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getStatusByIds = `-- name: GetStatusByIds :many
+SELECT id_status as id , nama_status from status 
+WHERE id_status = ANY($1::int[])
+`
+
+type GetStatusByIdsRow struct {
+	ID         int32  `json:"id"`
+	NamaStatus string `json:"nama_status"`
+}
+
+func (q *Queries) GetStatusByIds(ctx context.Context, ids []int32) ([]GetStatusByIdsRow, error) {
+	rows, err := q.db.Query(ctx, getStatusByIds, ids)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetStatusByIdsRow
+	for rows.Next() {
+		var i GetStatusByIdsRow
+		if err := rows.Scan(&i.ID, &i.NamaStatus); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listKategori = `-- name: ListKategori :many
+SELECT id_kategori as id, nama_kategori FROM kategori 
+ORDER BY id LIMIT $1 OFFSET $2
+`
+
+type ListKategoriParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListKategoriRow struct {
+	ID           int32  `json:"id"`
+	NamaKategori string `json:"nama_kategori"`
+}
+
+func (q *Queries) ListKategori(ctx context.Context, arg ListKategoriParams) ([]ListKategoriRow, error) {
+	rows, err := q.db.Query(ctx, listKategori, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListKategoriRow
+	for rows.Next() {
+		var i ListKategoriRow
+		if err := rows.Scan(&i.ID, &i.NamaKategori); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listProduk = `-- name: ListProduk :many
 SELECT id_produk as id, nama_produk, harga, kategori_id, status_id, created_at FROM produk
 ORDER BY id LIMIT $1 OFFSET $2
@@ -125,6 +232,41 @@ func (q *Queries) ListProduk(ctx context.Context, arg ListProdukParams) ([]ListP
 			&i.StatusID,
 			&i.CreatedAt,
 		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listStatus = `-- name: ListStatus :many
+SELECT id_status as id, nama_status FROM status 
+ORDER BY id LIMIT $1 OFFSET $2
+`
+
+type ListStatusParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListStatusRow struct {
+	ID         int32  `json:"id"`
+	NamaStatus string `json:"nama_status"`
+}
+
+func (q *Queries) ListStatus(ctx context.Context, arg ListStatusParams) ([]ListStatusRow, error) {
+	rows, err := q.db.Query(ctx, listStatus, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListStatusRow
+	for rows.Next() {
+		var i ListStatusRow
+		if err := rows.Scan(&i.ID, &i.NamaStatus); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

@@ -8,10 +8,14 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"ikhsanhaikal.com/fastprint-test/pgdb"
 )
+
+type kategoriUri struct {
+	ID int32 `uri:"id" binding:"required"`
+}
 
 func main() {
 	err := godotenv.Load()
@@ -23,18 +27,20 @@ func main() {
 
 	ctx := context.Background()
 
-	conn, err := pgx.Connect(ctx, dbUrl)
+	// conn, err := pgx.Connect(ctx, dbUrl)
+	pool, err := pgxpool.New(ctx, dbUrl)
+
 	if err != nil {
 		panic(err.Error())
 	}
 
-	defer conn.Close(ctx)
+	defer pool.Close()
 
-	if err := conn.Ping(ctx); err != nil {
+	if err := pool.Ping(ctx); err != nil {
 		panic(err.Error())
 	}
 
-	queries := pgdb.New(conn)
+	queries := pgdb.New(pool)
 
 	// initialize(queries) TODO: check if already populated
 
@@ -85,6 +91,7 @@ func main() {
 				"errors": err.Error(),
 				"data":   nil,
 			})
+			return
 		}
 
 		total, _ := queries.TotalProduk(ctx)
@@ -99,6 +106,129 @@ func main() {
 	r.POST("/produk", create_produk_handler(queries))
 	r.DELETE("/produk/:id", delete_produk_handler(queries))
 	r.PUT("/produk/:id", update_produk_handler(queries))
+
+	r.GET("/kategori", func(ctx *gin.Context) {
+
+		arrayOfids := ctx.QueryArray("ids")
+
+		fmt.Printf("arrayOfIds: %+v\n", arrayOfids)
+
+		if len(arrayOfids) >= 1 {
+			ids := []int32{}
+			for _, v := range arrayOfids {
+				id, _ := strconv.Atoi(v)
+				ids = append(ids, int32(id))
+			}
+			kategori_plural, err := queries.GetKategoriByIds(ctx, ids)
+
+			fmt.Printf("kategori_plural: %+v\n", kategori_plural)
+
+			if err != nil {
+				ctx.JSON(http.StatusOK, gin.H{
+					"errors": err.Error(),
+				})
+				return
+			}
+
+			ctx.JSON(http.StatusOK, gin.H{
+				"errors": nil,
+				"data":   kategori_plural,
+			})
+			return
+		}
+
+		k, err := queries.ListKategori(ctx, pgdb.ListKategoriParams{
+			Limit:  0,
+			Offset: 5,
+		})
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"errors": nil,
+			"data":   k,
+			"total":  0,
+		})
+	})
+
+	r.GET("/status", func(ctx *gin.Context) {
+
+		arrayOfids := ctx.QueryArray("ids")
+
+		fmt.Printf("arrayOfIds: %+v\n", arrayOfids)
+
+		if len(arrayOfids) >= 1 {
+			ids := []int32{}
+			for _, v := range arrayOfids {
+				id, _ := strconv.Atoi(v)
+				ids = append(ids, int32(id))
+			}
+			status_plural, err := queries.GetStatusByIds(ctx, ids)
+
+			fmt.Printf("status_plural: %+v\n", status_plural)
+
+			if err != nil {
+				ctx.JSON(http.StatusOK, gin.H{
+					"errors": err.Error(),
+				})
+				return
+			}
+
+			ctx.JSON(http.StatusOK, gin.H{
+				"errors": nil,
+				"data":   status_plural,
+			})
+			return
+		}
+
+		k, err := queries.ListStatus(ctx, pgdb.ListStatusParams{
+			Limit:  0,
+			Offset: 5,
+		})
+
+		if err != nil {
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"errors": nil,
+			"data":   k,
+			"total":  0,
+		})
+	})
+
+	r.GET("/kategori/:id", func(ctx *gin.Context) {
+		var kategoriUri kategoriUri
+
+		if err := ctx.ShouldBindUri(&kategoriUri); err != nil {
+			fmt.Printf("kategoriUri: %+v\n", kategoriUri)
+			ctx.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+			fmt.Printf("error: %+v\n", err)
+			return
+		}
+
+		k, err := queries.GetKategoriById(ctx, kategoriUri.ID)
+
+		if err != nil {
+			fmt.Printf("kategoriUri: %+v\n", kategoriUri)
+			fmt.Printf("error: %+v\n", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"errors": nil,
+			"data":   k,
+		})
+	})
 
 	r.Run("localhost:3000")
 }

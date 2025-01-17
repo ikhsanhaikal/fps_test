@@ -48,6 +48,15 @@ func main() {
 
 	r.Use(func(ctx *gin.Context) {
 		ctx.Header("Access-Control-Allow-Origin", "*")
+		ctx.Header("Access-Control-Allow-Credentials", "true")
+		ctx.Header("Access-Control-Allow-Headers", "Content-Type, Content-Length, Accept-Encoding, X-CSRF-Token, Authorization, accept, origin, Cache-Control, X-Requested-With")
+		ctx.Header("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+
+		if ctx.Request.Method == "OPTIONS" {
+			ctx.AbortWithStatus(204)
+			return
+		}
+
 		ctx.Next()
 	})
 
@@ -109,6 +118,27 @@ func main() {
 
 	r.GET("/kategori", func(ctx *gin.Context) {
 
+		q1 := ctx.DefaultQuery("perPage", "5")
+		q2 := ctx.DefaultQuery("page", "0")
+
+		perPage, err := strconv.ParseInt(q1, 10, 64)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+
+		page, err := strconv.ParseInt(q2, 10, 64)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+
 		arrayOfids := ctx.QueryArray("ids")
 
 		fmt.Printf("arrayOfIds: %+v\n", arrayOfids)
@@ -138,16 +168,19 @@ func main() {
 		}
 
 		k, err := queries.ListKategori(ctx, pgdb.ListKategoriParams{
-			Limit:  0,
-			Offset: 5,
+			Limit:  int32(perPage),
+			Offset: int32((page - 1) * perPage),
 		})
 
 		if err != nil {
+			fmt.Printf("errors: %+v\n", err)
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"errors": err.Error(),
 			})
 			return
 		}
+
+		fmt.Printf("k: %+v\n", k)
 
 		ctx.JSON(http.StatusOK, gin.H{
 			"errors": nil,
@@ -157,7 +190,26 @@ func main() {
 	})
 
 	r.GET("/status", func(ctx *gin.Context) {
+		q1 := ctx.DefaultQuery("perPage", "5")
+		q2 := ctx.DefaultQuery("page", "0")
 
+		perPage, err := strconv.ParseInt(q1, 10, 64)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
+
+		page, err := strconv.ParseInt(q2, 10, 64)
+
+		if err != nil {
+			ctx.JSON(http.StatusBadRequest, gin.H{
+				"errors": err.Error(),
+			})
+			return
+		}
 		arrayOfids := ctx.QueryArray("ids")
 
 		fmt.Printf("arrayOfIds: %+v\n", arrayOfids)
@@ -186,9 +238,9 @@ func main() {
 			return
 		}
 
-		k, err := queries.ListStatus(ctx, pgdb.ListStatusParams{
-			Limit:  0,
-			Offset: 5,
+		s, err := queries.ListStatus(ctx, pgdb.ListStatusParams{
+			Limit:  int32(perPage),
+			Offset: int32((page - 1) * perPage),
 		})
 
 		if err != nil {
@@ -198,9 +250,11 @@ func main() {
 			return
 		}
 
+		fmt.Printf("s: %+v\n", s)
+
 		ctx.JSON(http.StatusOK, gin.H{
 			"errors": nil,
-			"data":   k,
+			"data":   s,
 			"total":  0,
 		})
 	})
@@ -236,3 +290,26 @@ func main() {
 // 4. Buat halaman untuk menampilkan data yang sudah anda simpan
 // 5. Lalu tampilkan data yang hanya memiliki status " bisa dijual " this should be done on react
 // 7. Untuk fitur tambah dan edit gunakan form validasi (inputan nama harus diisi, dan harga harus berupa inputan angka)
+
+// if qId := ctx.Query("id"); qId != "" {
+// 	id, err := strconv.Atoi(qId)
+// 	if err != nil {
+// 		ctx.JSON(http.StatusBadRequest, gin.H{
+// 			"errors": err.Error(),
+// 		})
+// 		return
+// 	}
+// 	k, err := queries.GetKategoriById(ctx, int32(id))
+// 	if err != nil {
+// 		ctx.JSON(http.StatusInternalServerError, gin.H{
+// 			"errors": err.Error(),
+// 		})
+// 		return
+// 	}
+
+// 	ctx.JSON(http.StatusOK, gin.H{
+// 		"errors": nil,
+// 		"data":   k,
+// 	})
+// 	return
+// }

@@ -31,7 +31,7 @@ INSERT INTO produk (
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING *;
+RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id; 
 
 -- name: CreateKategori :one
 INSERT INTO kategori (
@@ -49,10 +49,10 @@ INSERT INTO status (
 )
 RETURNING *;
 
--- name: DeleteProduk :exec
+-- name: DeleteProduk :one
 DELETE FROM produk
 WHERE id_produk = $1
-RETURNING *;
+RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id;
 
 -- name: UpdateProduk :one
 UPDATE produk SET

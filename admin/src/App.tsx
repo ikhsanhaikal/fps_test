@@ -1,28 +1,24 @@
 import {
   Admin,
+  AutocompleteInput,
   Create,
   Datagrid,
   DataProvider,
   DateField,
-  DateInput,
   DeleteButton,
   fetchUtils,
   List,
   NumberInput,
-  ReferenceArrayField,
   ReferenceField,
   ReferenceInput,
-  ReferenceOneField,
   required,
   Resource,
   SimpleForm,
   TextField,
   TextInput,
-  WithRecord,
 } from "react-admin";
 
 import queryString from "query-string";
-import { useState } from "react";
 
 function App() {
   return (
@@ -42,8 +38,12 @@ function CreateProduk() {
     <Create>
       <SimpleForm>
         <TextInput source="nama" validate={[required()]} />
-        <ReferenceInput source="kategori_id" reference={"kategori"} />
-        {/* <ReferenceInput source="status_id" reference={"status"} /> */}
+        <ReferenceInput source="kategori_id" reference="kategori">
+          <AutocompleteInput optionText="nama_kategori" />
+        </ReferenceInput>
+        <ReferenceInput source="status_id" reference="status">
+          <AutocompleteInput optionText="nama_status" />
+        </ReferenceInput>
         <NumberInput
           source="harga"
           label="Harga produk"
@@ -72,7 +72,7 @@ function ListProduk() {
           <TextField source="nama_status" />
         </ReferenceField>
         <DateField source="created_at" />
-        {/* <DeleteButton /> */}
+        <DeleteButton mutationMode="pessimistic" />
       </Datagrid>
     </List>
   );
@@ -90,6 +90,7 @@ const dataProvider: DataProvider = {
       perPage,
     })}`;
     const resp = await httpClient(url, { signal: params.signal });
+    console.log("resp: ", resp.json.data);
     return {
       data: resp.json.data,
       total: resp.json.total,
@@ -100,11 +101,31 @@ const dataProvider: DataProvider = {
       ids: params.ids,
     };
     const url = `${apiUrl}/${resource}?${queryString.stringify(query)}`;
-    console.log("url: ", url);
+    // console.log("url: ", url);
     const resp = await httpClient(url, { signal: params.signal });
-    console.log(resp);
+    // console.log(resp);
 
     return { data: resp.json.data };
+  },
+  create: async (resource, params) => {
+    const response = await fetch(`${apiUrl}/${resource}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json;charset=utf-8",
+      },
+      body: JSON.stringify(params.data),
+    });
+
+    const result = await response.json();
+    // console.log("result: ", result);
+    return { data: result.data };
+  },
+  delete: async (resource, params) => {
+    const url = `${apiUrl}/${resource}/${params.id}`;
+    const { json } = await httpClient(url, {
+      method: "DELETE",
+    });
+    return { data: json.data };
   },
 };
 

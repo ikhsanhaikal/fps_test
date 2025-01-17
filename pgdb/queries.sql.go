@@ -33,7 +33,7 @@ INSERT INTO produk (
 ) VALUES (
   $1, $2, $3, $4
 )
-RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
+RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id
 `
 
 type CreateProdukParams struct {
@@ -43,21 +43,28 @@ type CreateProdukParams struct {
 	StatusID   int64          `json:"status_id"`
 }
 
-func (q *Queries) CreateProduk(ctx context.Context, arg CreateProdukParams) (Produk, error) {
+type CreateProdukRow struct {
+	ID         int32          `json:"id"`
+	NamaProduk string         `json:"nama_produk"`
+	Harga      pgtype.Numeric `json:"harga"`
+	KategoriID int64          `json:"kategori_id"`
+	StatusID   int64          `json:"status_id"`
+}
+
+func (q *Queries) CreateProduk(ctx context.Context, arg CreateProdukParams) (CreateProdukRow, error) {
 	row := q.db.QueryRow(ctx, createProduk,
 		arg.NamaProduk,
 		arg.Harga,
 		arg.KategoriID,
 		arg.StatusID,
 	)
-	var i Produk
+	var i CreateProdukRow
 	err := row.Scan(
-		&i.Id,
+		&i.ID,
 		&i.NamaProduk,
 		&i.Harga,
 		&i.KategoriID,
 		&i.StatusID,
-		&i.CreatedAt,
 	)
 	return i, err
 }
@@ -78,15 +85,31 @@ func (q *Queries) CreateStatus(ctx context.Context, namaStatus string) (Status, 
 	return i, err
 }
 
-const deleteProduk = `-- name: DeleteProduk :exec
+const deleteProduk = `-- name: DeleteProduk :one
 DELETE FROM produk
 WHERE id_produk = $1
-RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
+RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id
 `
 
-func (q *Queries) DeleteProduk(ctx context.Context, idProduk int32) error {
-	_, err := q.db.Exec(ctx, deleteProduk, idProduk)
-	return err
+type DeleteProdukRow struct {
+	ID         int32          `json:"id"`
+	NamaProduk string         `json:"nama_produk"`
+	Harga      pgtype.Numeric `json:"harga"`
+	KategoriID int64          `json:"kategori_id"`
+	StatusID   int64          `json:"status_id"`
+}
+
+func (q *Queries) DeleteProduk(ctx context.Context, idProduk int32) (DeleteProdukRow, error) {
+	row := q.db.QueryRow(ctx, deleteProduk, idProduk)
+	var i DeleteProdukRow
+	err := row.Scan(
+		&i.ID,
+		&i.NamaProduk,
+		&i.Harga,
+		&i.KategoriID,
+		&i.StatusID,
+	)
+	return i, err
 }
 
 const getKategoriById = `-- name: GetKategoriById :one

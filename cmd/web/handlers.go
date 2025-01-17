@@ -62,13 +62,19 @@ func delete_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
 
 		fmt.Printf("produk_id: %#v\n", produkUri)
 
-		if err := queries.DeleteProduk(ctx, produkUri.ID); err != nil {
+		produk, err := queries.DeleteProduk(ctx, produkUri.ID)
+		if err != nil {
 			ctx.JSON(http.StatusInternalServerError, gin.H{
 				"errors": err.Error(),
 			})
 			return
 		}
-		ctx.Status(http.StatusNoContent)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"errors": nil,
+			"data":   produk,
+		})
+
 	}
 }
 

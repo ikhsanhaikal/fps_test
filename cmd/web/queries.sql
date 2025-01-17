@@ -17,6 +17,10 @@ WHERE id_status = ANY(@ids::int[]);
 SELECT id_produk as id, nama_produk, harga, kategori_id, status_id, created_at FROM produk
 ORDER BY id LIMIT $1 OFFSET $2;
 
+-- name: GetProdukById :one
+SELECT id_produk as id, nama_produk, harga, kategori_id, status_id from produk 
+WHERE id_produk = $1;
+
 -- name: ListKategori :many
 SELECT id_kategori as id, nama_kategori FROM kategori 
 ORDER BY id LIMIT $1 OFFSET $2;
@@ -61,4 +65,4 @@ UPDATE produk SET
   kategori_id = COALESCE(sqlc.narg('kategori_id'), kategori_id),
   status_id = COALESCE(sqlc.narg('status_id'), status_id)
 WHERE id_produk = $1
-RETURNING *;
+RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id;

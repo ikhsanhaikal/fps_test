@@ -6,6 +6,8 @@ import {
   DataProvider,
   DateField,
   DeleteButton,
+  Edit,
+  EditButton,
   fetchUtils,
   List,
   NumberInput,
@@ -27,9 +29,31 @@ function App() {
         name="produk"
         list={ListProduk}
         create={CreateProduk}
+        edit={EditProduk}
         hasShow={true}
       />
     </Admin>
+  );
+}
+
+function EditProduk() {
+  return (
+    <Edit>
+      <SimpleForm>
+        <TextInput source="nama_produk" validate={[required()]} />
+        <ReferenceInput source="kategori_id" reference="kategori">
+          <AutocompleteInput optionText="nama_kategori" />
+        </ReferenceInput>
+        <ReferenceInput source="status_id" reference="status">
+          <AutocompleteInput optionText="nama_status" />
+        </ReferenceInput>
+        <NumberInput
+          source="harga"
+          label="Harga produk"
+          validate={[required()]}
+        />
+      </SimpleForm>
+    </Edit>
   );
 }
 
@@ -73,6 +97,7 @@ function ListProduk() {
         </ReferenceField>
         <DateField source="created_at" />
         <DeleteButton mutationMode="pessimistic" />
+        <EditButton />
       </Datagrid>
     </List>
   );
@@ -95,6 +120,12 @@ const dataProvider: DataProvider = {
       data: resp.json.data,
       total: resp.json.total,
     };
+  },
+  getOne: async (resource, params) => {
+    const url = `${apiUrl}/${resource}/${params.id}`;
+    const { json } = await httpClient(url, { signal: params.signal });
+    console.log("getOne: ", json.data);
+    return { data: json.data };
   },
   getMany: async (resource, params) => {
     const query = {
@@ -124,6 +155,14 @@ const dataProvider: DataProvider = {
     const url = `${apiUrl}/${resource}/${params.id}`;
     const { json } = await httpClient(url, {
       method: "DELETE",
+    });
+    return { data: json.data };
+  },
+  update: async (resource, params) => {
+    const url = `${apiUrl}/${resource}/${params.id}`;
+    const { json } = await httpClient(url, {
+      method: "PUT",
+      body: JSON.stringify(params.data),
     });
     return { data: json.data };
   },

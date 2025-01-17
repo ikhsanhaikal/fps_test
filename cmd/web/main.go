@@ -112,6 +112,30 @@ func main() {
 		})
 	})
 
+	r.GET("/produk/:id", func(ctx *gin.Context) {
+		var produkUri ProdukUri
+
+		if err := ctx.ShouldBindUri(&produkUri); err != nil {
+			fmt.Printf("produkUri: %+v\n", produkUri)
+			ctx.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+			fmt.Printf("error: %+v\n", err)
+			return
+		}
+
+		p, err := queries.GetProdukById(ctx, produkUri.ID)
+
+		if err != nil {
+			fmt.Printf("error: %+v\n", err)
+			ctx.JSON(http.StatusBadRequest, gin.H{"errors": err.Error()})
+			return
+		}
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"errors": nil,
+			"data":   p,
+		})
+	})
+
 	r.POST("/produk", create_produk_handler(queries))
 	r.DELETE("/produk/:id", delete_produk_handler(queries))
 	r.PUT("/produk/:id", update_produk_handler(queries))

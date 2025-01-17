@@ -154,6 +154,32 @@ func (q *Queries) GetKategoriByIds(ctx context.Context, ids []int32) ([]GetKateg
 	return items, nil
 }
 
+const getProdukById = `-- name: GetProdukById :one
+SELECT id_produk as id, nama_produk, harga, kategori_id, status_id from produk 
+WHERE id_produk = $1
+`
+
+type GetProdukByIdRow struct {
+	ID         int32          `json:"id"`
+	NamaProduk string         `json:"nama_produk"`
+	Harga      pgtype.Numeric `json:"harga"`
+	KategoriID int64          `json:"kategori_id"`
+	StatusID   int64          `json:"status_id"`
+}
+
+func (q *Queries) GetProdukById(ctx context.Context, idProduk int32) (GetProdukByIdRow, error) {
+	row := q.db.QueryRow(ctx, getProdukById, idProduk)
+	var i GetProdukByIdRow
+	err := row.Scan(
+		&i.ID,
+		&i.NamaProduk,
+		&i.Harga,
+		&i.KategoriID,
+		&i.StatusID,
+	)
+	return i, err
+}
+
 const getStatusByIds = `-- name: GetStatusByIds :many
 SELECT id_status as id , nama_status from status 
 WHERE id_status = ANY($1::int[])
@@ -318,7 +344,7 @@ UPDATE produk SET
   kategori_id = COALESCE($4, kategori_id),
   status_id = COALESCE($5, status_id)
 WHERE id_produk = $1
-RETURNING id_produk, nama_produk, harga, kategori_id, status_id, created_at
+RETURNING id_produk as id, nama_produk, harga, kategori_id, status_id
 `
 
 type UpdateProdukParams struct {
@@ -329,7 +355,15 @@ type UpdateProdukParams struct {
 	StatusID   pgtype.Int8    `json:"status_id"`
 }
 
-func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (Produk, error) {
+type UpdateProdukRow struct {
+	ID         int32          `json:"id"`
+	NamaProduk string         `json:"nama_produk"`
+	Harga      pgtype.Numeric `json:"harga"`
+	KategoriID int64          `json:"kategori_id"`
+	StatusID   int64          `json:"status_id"`
+}
+
+func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (UpdateProdukRow, error) {
 	row := q.db.QueryRow(ctx, updateProduk,
 		arg.Id,
 		arg.NamaProduk,
@@ -337,14 +371,13 @@ func (q *Queries) UpdateProduk(ctx context.Context, arg UpdateProdukParams) (Pro
 		arg.KategoriID,
 		arg.StatusID,
 	)
-	var i Produk
+	var i UpdateProdukRow
 	err := row.Scan(
-		&i.Id,
+		&i.ID,
 		&i.NamaProduk,
 		&i.Harga,
 		&i.KategoriID,
 		&i.StatusID,
-		&i.CreatedAt,
 	)
 	return i, err
 }

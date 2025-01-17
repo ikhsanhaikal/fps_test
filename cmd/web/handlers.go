@@ -88,7 +88,7 @@ func update_produk_handler(queries *pgdb.Queries) func(*gin.Context) {
 		}
 
 		body := struct {
-			Nama       *string `form:"nama" json:"nama" xml:"nama"  binding:"omitempty"`
+			Nama       *string `form:"nama_produk" json:"nama_produk" binding:"omitempty"`
 			Harga      *int    `form:"harga" json:"harga" xml:"harga" binding:"omitempty"`
 			KategoriID *int    `form:"kategori_id" json:"kategori_id" xml:"kategori_id" binding:"omitempty"`
 			StatusID   *int    `form:"status_id" json:"status_id" xml:"status_id" binding:"omitempty"`

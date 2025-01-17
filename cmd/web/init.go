@@ -39,6 +39,12 @@ type Memo struct {
 }
 
 func initialize(queries *pgdb.Queries) {
+	path, _ := os.Getwd()
+	if _, error := os.Stat(fmt.Sprintf("%s/%s", path, "initialized.txt")); error == nil {
+		fmt.Printf("initialized already\n")
+		return
+	}
+
 	err := godotenv.Load()
 	if err != nil {
 		panic(err.Error())
@@ -125,4 +131,10 @@ func initialize(queries *pgdb.Queries) {
 			panic(err.Error())
 		}
 	}
+	file, err := os.Create("initialized.txt")
+	if err != nil {
+		fmt.Println("Error creating file:", err)
+		return
+	}
+	file.Close()
 }

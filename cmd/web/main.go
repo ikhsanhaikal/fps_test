@@ -18,6 +18,7 @@ type kategoriUri struct {
 }
 
 func main() {
+
 	err := godotenv.Load()
 	if err != nil {
 		panic(err.Error())
@@ -42,7 +43,7 @@ func main() {
 
 	queries := pgdb.New(pool)
 
-	// initialize(queries) TODO: check if already populated
+	initialize(queries)
 
 	r := gin.Default()
 

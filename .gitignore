@@ -1,4 +1,5 @@
 .env
+initialized.txt
 
 # view ignore
 admin/logs
